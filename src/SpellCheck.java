@@ -18,20 +18,22 @@ import java.io.FileNotFoundException;
 */
 public class SpellCheck {
 
+
    public static void main(String[] args)
            throws FileNotFoundException {
       // Read the dictionary and the document
 
       Collection<String> dictionaryWords = readDictionary("words");
       //Set<String> documentWords = readWords("alice30.txt");
-      Set<String> documentWords = readWords("war-and-peace.txt"); // file to be spell-checked
+      Set<String> documentWords = readWords("Project-Gutenberg.txt"); // file to be spell-checked
 
       // Print all words that are in the document but not the dictionary
       int numberMisspeltWords = 0;
       for (String word : documentWords) {
          if (!dictionaryWords.contains(word)) {
             numberMisspeltWords++;
-            //System.out.println(word);
+
+            System.out.println(word);
          }
       }
       System.out.println("Number of misspelt words: " + numberMisspeltWords);
