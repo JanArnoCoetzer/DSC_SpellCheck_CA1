@@ -1,72 +1,156 @@
 /*****************************************************
- *	Title: SpellCheck source code
- *	Author: Horstmann
+ *	Title: SpellCheck Benchmark Suite (CA1 Edition)
+ *	Author: Horstmann / Edited for CA1
+ *  Editor: Jan Arno COetzer
  *	Site owner/sponsor: Wiley
- *  Date:
- *	Code version: edited October 9th 2023
- *	Availability: Instructor Companion Site (online) to Big Java: Late Objects, 1st Edition (Wiley) (Accessed 9th October 2023)
+ *	Code version: Edited November 2026
+ *	Availability: Instructor Companion Site to Big Java: Late Objects
  *	Modified:
- *       Collection used instead of Set for dictionaryWords to allow us experiment with different collections.
-  *****************************************************/
+ *       - Restructured to sequentially run LinkedList, ArrayList (.contains),
+ *         ArrayList (binarySearch), HashSet, and TreeSet.
+ *       - Added individual execution targets to separate profiler tracks.
+ *****************************************************/
 
 import java.util.*;
 import java.io.File;
 import java.io.FileNotFoundException;
 
-/**
-   This program checks which words in a file are not present in a dictionary.
-*/
 public class SpellCheck {
 
+   public static void main(String[] args) throws FileNotFoundException {
+      String dictFile = "words"; // FIXED: Removed .txt extension to match your actual file
+      String textFile = "Project-Gutenberg.txt";
 
-   public static void main(String[] args)
-           throws FileNotFoundException {
-      // Read the dictionary and the document
+      // Load document words once to keep the verification uniform across implementations
+      Set<String> documentWords = readWords(textFile);
+      System.out.println("Document loaded. Total unique words to check: " + documentWords.size());
+      System.out.println("=================================================================");
 
-      Collection<String> dictionaryWords = readDictionary("words");
-      //Set<String> documentWords = readWords("alice30.txt");
-      Set<String> documentWords = readWords("Project-Gutenberg.txt"); // file to be spell-checked
+      // Run 1: LinkedList
+      runLinkedListTest(dictFile, documentWords);
 
-      // Print all words that are in the document but not the dictionary
-      int numberMisspeltWords = 0;
+      // Run 2: ArrayList
+      //runArrayListContainsTest(dictFile, documentWords);
+
+      // Run 3: ArrayList (Collections.binarySearch) - Required by Question (3) & (4)
+      //runArrayListBinarySearchTest(dictFile, documentWords);
+
+      // Run 4: HashSet
+      //runHashSetTest(dictFile, documentWords);
+
+      // Run 5: TreeSet
+      //runTreeSetTest(dictFile, documentWords);
+   }
+
+
+   // 1. LINKED LIST TEST (.contains)
+
+   private static void runLinkedListTest(String filename, Set<String> documentWords) throws FileNotFoundException {
+      System.out.println("Starting LinkedList evaluation...");
+      Collection<String> dict = new LinkedList<>();
+      loadDictionary(filename, dict);
+
+      int misspelt = 0;
       for (String word : documentWords) {
-         if (!dictionaryWords.contains(word)) {
-            numberMisspeltWords++;
-
-            System.out.println(word);
+         if (!dict.contains(word)) {
+            misspelt++;
          }
       }
-      System.out.println("Number of misspelt words: " + numberMisspeltWords);
+      System.out.println("LinkedList Finished. Misspelt: " + misspelt + "\n");
    }
 
-   private static Collection<String> readDictionary(String filename)
-           throws FileNotFoundException {
-      Collection<String> words = new LinkedList<String>();
+
+   // 2. ARRAYLIST TEST (.contains baseline)
+
+   private static void runArrayListContainsTest(String filename, Set<String> documentWords) throws FileNotFoundException {
+      System.out.println("Starting ArrayList (.contains) evaluation...");
+      Collection<String> dict = new ArrayList<>();
+      loadDictionary(filename, dict);
+
+      int misspelt = 0;
+      for (String word : documentWords) {
+         if (!dict.contains(word)) {
+            misspelt++;
+         }
+      }
+      System.out.println("ArrayList (.contains) Finished. Misspelt: " + misspelt + "\n");
+   }
+
+
+   // 3. ARRAYLIST TEST (Collections.binarySearch)
+
+   private static void runArrayListBinarySearchTest(String filename, Set<String> documentWords) throws FileNotFoundException {
+      System.out.println("Starting ArrayList (Binary Search) evaluation...");
+      List<String> dict = new ArrayList<>();
+      loadDictionary(filename, dict);
+
+      // Binary search absolutely requires a sorted structure beforehand
+      Collections.sort(dict);
+
+      int misspelt = 0;
+      for (String word : documentWords) {
+         // Performance optimization using O(log n) binary step method
+         if (Collections.binarySearch(dict, word) < 0) {
+            misspelt++;
+         }
+      }
+      System.out.println("ArrayList Binary Search Finished. Misspelt: " + misspelt + "\n");
+   }
+
+
+   // 4. HASHSET TEST (.contains)
+
+   private static void runHashSetTest(String filename, Set<String> documentWords) throws FileNotFoundException {
+      System.out.println("Starting HashSet evaluation...");
+      Collection<String> dict = new HashSet<>();
+      loadDictionary(filename, dict);
+
+      int misspelt = 0;
+      for (String word : documentWords) {
+         if (!dict.contains(word)) {
+            misspelt++;
+         }
+      }
+      System.out.println("HashSet Finished. Misspelt: " + misspelt + "\n");
+   }
+
+
+   // 5. TREESET TEST (.contains)
+
+   private static void runTreeSetTest(String filename, Set<String> documentWords) throws FileNotFoundException {
+      System.out.println("Starting TreeSet evaluation...");
+      Collection<String> dict = new TreeSet<>();
+      loadDictionary(filename, dict);
+
+      int misspelt = 0;
+      for (String word : documentWords) {
+         if (!dict.contains(word)) {
+            misspelt++;
+         }
+      }
+      System.out.println("TreeSet Finished. Misspelt: " + misspelt + "\n");
+   }
+
+
+   // FILE DISK UTILITIES
+
+   private static void loadDictionary(String filename, Collection<String> storageContainer) throws FileNotFoundException {
       Scanner in = new Scanner(new File(filename));
-      // Use any characters other than a-z or A-Z as delimiters
+      in.useDelimiter("[^a-zA-Z]+");
+      while (in.hasNext()) {
+         storageContainer.add(in.next().toLowerCase());
+      }
+      in.close();
+   }
+
+   public static Set<String> readWords(String filename) throws FileNotFoundException {
+      Set<String> words = new HashSet<>();
+      Scanner in = new Scanner(new File(filename));
       in.useDelimiter("[^a-zA-Z]+");
       while (in.hasNext()) {
          words.add(in.next().toLowerCase());
       }
-      return words;
-   }
-
-   /**
-    * Reads all words from a file.
-    *
-    * @param filename the name of the file
-    * @return a set with all lowercased words in the file. Here, a
-    * word is a sequence of upper- and lowercase letters.
-    */
-   public static Set<String> readWords(String filename)
-           throws FileNotFoundException {
-      Set<String> words = new HashSet<String>();
-      Scanner in = new Scanner(new File(filename));
-      // Use any characters other than a-z or A-Z as delimiters
-      in.useDelimiter("[^a-zA-Z]+");
-      while (in.hasNext()) {
-         words.add(in.next().toLowerCase());
-      }
+      in.close();
       return words;
    }
 }
